@@ -10,8 +10,12 @@ import requests
 import json
 from datetime import datetime
 
-with open("api_key.txt") as apifile:
-    api_key = apifile.read()
+try: 
+    with open("api_key.txt") as apifile:
+        api_key = apifile.read()
+except FileNotFoundError:
+    print(f'Ошибка: в папке с программой должен быть файл "api_key.txt", в котором записан API ключ')
+    raise SystemExit
 
 city = 'Kaliningrad'
 my_params = {
@@ -38,16 +42,14 @@ if response.ok:
         day = datetime.utcfromtimestamp(day_ts).strftime('%A')
         date = datetime.utcfromtimestamp(day_ts).strftime('%d-%m-%Y')
         feelslike_diff = float(el.get('temp').get('night')) - float(el.get('feels_like').get('night'))
-        feelslike[day] = feelslike_diff
+        feelslike[day] = round(feelslike_diff, 2)
         daylight_ts = int(el.get('sunset')) - int(el.get('sunrise'))
         if len(daylight_h) < 5:
             daylight_h[date] = daylight_ts
 
-    # print(feelslike)
     print(f"1) {min(feelslike, key=lambda x: feelslike[x])} (difference: {min(feelslike.values())} °C)")
     print(f"2) Max daylight hours: {datetime.utcfromtimestamp(max(daylight_h.values())).strftime('%H:%M:%S')} "
           f"(on {max(daylight_h, key=lambda x: daylight_h[x])})")
 else:
     print(f"Ответ сервера не ОК. Код ответа: {response.status_code}. "
           f"Попробуй проверить API ключ (должен быть в файле 'api_key.txt')")
-
